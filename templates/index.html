@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Start Page{% endblock title %}
+
+{% block body %}
+{{super()}}
+<style type="text/css">
+.img-responsive{
+    margin: 0 auto;
+}
+</style>
+
+<div class="container">
+<div class="jumbotron">
+    <h2 class="text-center">你好，歡迎光臨。這是史楚普測試</h2>
+    <p class="text-center">請你依照文字的顏色選擇答案，而不是文字的意義顏色。</p>
+    <div class="container-fluid">
+        <img src='static/img/Blue_R.png' class="img-responsive">
+        <p class="text-center">舉例來說，這張圖的答案請選<strong>紅色</strong>，而不是<strong>藍色</strong>。</p>
+    </div>
+    <p class="text-center">如果你準備好了，在下面輸入你的名字然後按下開始測驗。</p>
+    
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <form class="form-horizontal" action='/ready' method="POST">
+                <div class="col-sm-8">
+                <input type="text" name="username" class="form-control" placeholder="Your name">
+                </div>
+                <div class="col-sm-4">
+                <input type="submit" class="btn btn-primary"  value="開始測驗">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

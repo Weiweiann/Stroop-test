@@ -1,0 +1,1 @@
+web: gunicorn stroop:app --log-file=-

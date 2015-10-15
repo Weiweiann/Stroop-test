@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}History{% endblock title %}
+
+{% block body %}
+{{ super() }}
+
+<div class="container">
+<table class="table">
+    <thead>
+        <tr>
+            <th>姓名</th>
+            <th>答對率</th>
+            <th>答錯所花時間</th>
+            <th>答對所花時間</th>
+            <th>總測驗時間</th>
+            <th>測驗日期</th>
+        </tr>
+    </thead>
+    <tbody>
+       {% for row in history_fetch %}
+        <tr>
+            <td>{{ row.0  }}</td>
+            <td>{{ row.1  }}</td>
+            <td>{{ row.2  }}</td>
+            <td>{{ row.3  }}</td>
+            <td>{{ row.4  }}</td>
+            <td>{{ row.5  }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}
+

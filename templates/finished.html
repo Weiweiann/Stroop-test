@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Result Page{% endblock %}
+
+{% block body %}
+{{ super() }}
+<div class="container">
+<h1>哈囉 {{name}}, 你的答對率是 {{ accuracy }}%, 總共花了 {{ time_spend }} 秒。</h1>
+<p class="lead">完成測驗，謝謝你的參與！</p>
+</div>
+
+
+{% endblock %}
