@@ -28,6 +28,11 @@ def close_connection(exception):
 
 @app.route('/')
 def home():
+    return render_template('index.html')
+
+@app.route('/ready', methods=['POST','GET'])
+def ready():
+    global username
     global test_times
     global correct_times
     global max_testtimes
@@ -41,46 +46,28 @@ def home():
     total_right_time = 0
     total_wrong_time = 0
 
-
-
-    return render_template('index.html')
-
-@app.route('/ready', methods=['POST','GET'])
-def ready():
-    global username
-
     if request.method == "POST":
         db = get_db()
         global username
         username = request.form.get("username")
         with db:
             db.execute("insert into persons(name) values(?);", (username,))
-        return redirect(url_for('stroop'))
-    else:
+        return redirect(url_for('start'))
+    elif request.method == 'GET':
         return 'GET method is not supported'
+    else:
+        return 'error occurs'
 
-
-
-@app.route('/stroop')
-def stroop():
+@app.route('/start')
+def start():
     global test_times
-
-    test_times += 1
-    print("this is the ", test_times, "test.")
-    global starttime
-    starttime = time.now()
-    return render_template('stroop.html')
-
-
-@app.route('/start', methods=['GET','POST'])
-def color_selection():
-    global test_times
-    global max_testtimes
-    global correct_times
-    global endtime
     global r_img_name
     global starttime
-    global total_time
+    
+    
+    test_times += 1
+    print("this is the ", test_times, "test.")
+    starttime = time.now()
 
     db = get_db()
     with db:
@@ -90,19 +77,64 @@ def color_selection():
             ]
     random_img = random.choice(images)
     r_img_name = random_img
-    random_img_path = url_for('static', filename = 'img/' + random_img + '.png')
+    print(random_img)
 
+    random_img_path = url_for('static', filename = 'img/' + random_img + '.png')
     return render_template('stroop.html',img=random_img_path)
 
 
 
-@app.route('/answer', methods=['POST'])
-def speech_comparsion():
-    if request.method == 'POST':
-        answer = request.get_json(force=True)
-        print(answer)
-        return("finally")
-       
+@app.route('/answer', methods=['POST','GET'])
+def answer():
+    global test_times
+    global max_testtimes
+    global correct_times
+    global endtime
+    global r_img_name
+    global starttime
+    global total_time
+ 
+
+    if test_times <= max_testtimes:
+        if request.method == 'POST':
+            answer = request.get_json(force=True)
+            if answer == "紅色":
+                answer_real = "R"
+            elif answer == "藍色":
+                answer_real = "B"
+            elif answer == "綠色":
+                answer_real = "G"
+            elif answer == "黃色":
+                answer_real = "Y" 
+            else:
+                answer_real = ""
+    
+            db = get_db()
+            c = db.execute("SELECT color FROM image WHERE image_name = ?", (r_img_name,))
+            right_answer = [r[0] for r in c][0]
+    
+            if answer_real == right_answer:
+                correct_times += 1
+                print("Correct! " + answer)
+                endtime = time.now()
+                time_spend_pertest = endtime - starttime
+                right_time = round(time_spend_pertest.total_seconds(),2)
+                global total_right_time
+                total_right_time += right_time
+                return redirect(url_for('home'))
+            else:
+                print("Oops. " + answer)
+                endtime = time.now()
+                time_spend_pertest = endtime - starttime
+                wrong_time = round(time_spend_pertest.total_seconds(),2)
+                global total_wrong_time
+                total_wrong_time += wrong_time
+                return redirect(url_for('start'))
+        else:
+            return "You shall not GET here!"
+    else:
+        return redirect(url_for('finished'))
+        
 @app.route('/finished')
 def finished():
     global correct_times
