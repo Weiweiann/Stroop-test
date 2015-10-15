@@ -70,6 +70,9 @@
 		  </div>
 		</div>
 	</div>
+	<form id="ans-form" action="/answer" method="POST" style="display: none;">
+		<input id="ans" name="ans" type="text" />
+	</form>
 </div>
 
 <script>
@@ -129,13 +132,15 @@ if (!('webkitSpeechRecognition' in window)) {
       range.selectNode(document.getElementById('final_span'));
       window.getSelection().addRange(range);
     }
-    $.ajax({
+    /*$.ajax({
     	url:'/answer',
     	type:'POST',
     	data: JSON.stringify(final_words),
     	success: function(data){
     				console.log(data)}
-    });
+    });*/
+    $('#ans').val(final_words);
+    $('#ans-form').submit();
   };
 
   recognition.onresult = function(event) {

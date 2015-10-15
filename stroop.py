@@ -97,7 +97,8 @@ def answer():
 
     if test_times <= max_testtimes:
         if request.method == 'POST':
-            answer = request.get_json(force=True)
+            # answer = request.get_json(force=True)
+            answer = request.form['ans']
             if answer == "紅色":
                 answer_real = "R"
             elif answer == "藍色":
@@ -121,7 +122,7 @@ def answer():
                 right_time = round(time_spend_pertest.total_seconds(),2)
                 global total_right_time
                 total_right_time += right_time
-                return redirect(url_for('home'))
+                return redirect(url_for('start'))
             else:
                 print("Oops. " + answer)
                 endtime = time.now()
