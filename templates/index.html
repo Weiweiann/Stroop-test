@@ -8,18 +8,62 @@
 .img-responsive{
     margin: 0 auto;
 }
+
+.final {
+    color: black;
+    padding-right: 3px; 
+  }
+
+.info {
+    font-size: 14px;
+    text-align: center;
+    color: #777;
+    display: none;
+  }
+
+  #info {
+    font-size: 20px;
+    text-align: center;
+    color: #777;
+    visibility: hidden;
+  }
+
+
+  #results {
+    font-size: 30px;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: left;
+    min-height: auto;
+    width: auto;
+  }
+  
+
 </style>
 
 <div class="container">
 <div class="jumbotron">
     <h2 class="text-center">你好，歡迎光臨。這是史楚普測試</h2>
-    <p class="text-center">請你依照文字的顏色選擇答案，而不是文字的意義顏色。</p>
-    <div class="container-fluid">
+    <p class="text-center">請你依照文字的顏色說出答案，而不是文字的意義顏色。</p>
+    <div class="container">
         <img src='static/img/Blue_R.png' class="img-responsive">
-        <p class="text-center">舉例來說，這張圖的答案請選<strong>紅色</strong>，而不是<strong>藍色</strong>。</p>
+        <p class="text-center">舉例來說，這張圖的答案請說<strong>紅色</strong>，而不是<strong>藍色</strong>。</p>
     </div>
-    <p class="text-center">如果你準備好了，在下面輸入你的名字然後按下開始測驗。</p>
+    <p class="text-center">以下是麥克風測試，請你點擊允許麥克風使用，並說說話。</p>
     
+    <div id="info"></div>
+    <div class="row">
+    <div class="col-md-4 col-md-offset-4">
+		<div id="results" class="panel panel-default">
+			<span id="final_span" class="final"></span>
+			<span id="interim_span" class="interim"></span>
+			<p>
+		</div>
+    </div>
+    </div>
+    
+    <p class="text-center">如果你準備好了，在下面輸入你的名字然後按下開始測驗。</p>
     <div class="row">
         <div class="col-md-6 col-md-offset-3">
             <form class="form-horizontal" action='/ready' method="POST">
@@ -34,4 +78,8 @@
     </div>
 </div>
 </div>
+
+
+<script src={{ speechjs }}> </script>
+<
 {% endblock %}

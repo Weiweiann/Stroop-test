@@ -6,7 +6,8 @@ from flask  import Flask, request, render_template, url_for, redirect, g
 import sqlite3
 import random
 from datetime import datetime as time
-
+from time import sleep
+import random
 app = Flask(__name__)
 
 
@@ -28,7 +29,8 @@ def close_connection(exception):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    speechjs = url_for('static', filename = 'js/speechRecognition_continous.js')
+    return render_template('index.html',speechjs=speechjs)
 
 @app.route('/ready', methods=['POST','GET'])
 def ready():
@@ -38,13 +40,23 @@ def ready():
     global max_testtimes
     global total_right_time
     global total_wrong_time
+    global random_img
+    global userid
 
-
-    max_testtimes = 10    # the exam times, set any number as you want!
+    max_testtimes = 5    # the exam times, set any number as you want!
     test_times = 0
     correct_times = 0
     total_right_time = 0
     total_wrong_time = 0
+
+    db = get_db()
+    with db:
+        cursor = db.execute("SELECT image_name from image")
+    images=[
+            row[0] for row in cursor
+            ]
+    random_img = [images[1],images[3],images[5],images[7],images[9]]
+   
 
     if request.method == "POST":
         db = get_db()
@@ -52,6 +64,8 @@ def ready():
         username = request.form.get("username")
         with db:
             db.execute("insert into persons(name) values(?);", (username,))
+            cursor = db.execute("select id from persons where name=(?) order by id desc limit 1", (username,))
+            userid = [row[0] for row in cursor][0]
         return redirect(url_for('start'))
     elif request.method == 'GET':
         return 'GET method is not supported'
@@ -66,23 +80,20 @@ def start():
     
     
     test_times += 1
-    print("this is the ", test_times, "test.")
-    starttime = time.now()
 
-    db = get_db()
-    with db:
-        cursor = db.execute("SELECT image_name from image")
-    images=[
-            row[0] for row in cursor
-            ]
-    random_img = random.choice(images)
-    r_img_name = random_img
-    print(random_img)
+    if test_times <= max_testtimes:
+        print("this is the ", test_times, "test.")
+        starttime = time.now()
 
-    random_img_path = url_for('static', filename = 'img/' + random_img + '.png')
-    return render_template('stroop.html',img=random_img_path)
+        r_img_name = str(random_img[test_times-1])
+        print(r_img_name)
 
-
+        random_img_path = url_for('static', filename = 'img/' + r_img_name + '.png')
+        speechjs = url_for('static', filename = 'js/speechRecognition.js')
+        return render_template('stroop.html',img=random_img_path, speechjs=speechjs)
+    else:
+        sleep(random.choice([2,3,2.5]))
+        return redirect(url_for('finished'))
 
 @app.route('/answer', methods=['POST','GET'])
 def answer():
@@ -95,46 +106,58 @@ def answer():
     global total_time
  
 
-    if test_times <= max_testtimes:
-        if request.method == 'POST':
-            # answer = request.get_json(force=True)
-            answer = request.form['ans']
-            if answer == "紅色":
-                answer_real = "R"
-            elif answer == "藍色":
-                answer_real = "B"
-            elif answer == "綠色":
-                answer_real = "G"
-            elif answer == "黃色":
-                answer_real = "Y" 
-            else:
-                answer_real = ""
-    
-            db = get_db()
-            c = db.execute("SELECT color FROM image WHERE image_name = ?", (r_img_name,))
-            right_answer = [r[0] for r in c][0]
-    
-            if answer_real == right_answer:
-                correct_times += 1
-                print("Correct! " + answer)
-                endtime = time.now()
-                time_spend_pertest = endtime - starttime
-                right_time = round(time_spend_pertest.total_seconds(),2)
-                global total_right_time
-                total_right_time += right_time
-                return redirect(url_for('start'))
-            else:
-                print("Oops. " + answer)
-                endtime = time.now()
-                time_spend_pertest = endtime - starttime
-                wrong_time = round(time_spend_pertest.total_seconds(),2)
-                global total_wrong_time
-                total_wrong_time += wrong_time
-                return redirect(url_for('start'))
+    if request.method == 'POST':
+        # answer = request.get_json(force=True)
+        answer = request.form['ans']
+        if answer == "紅色":
+            answer_real = "R"
+        elif answer == "藍色":
+            answer_real = "B"
+        elif answer == "綠色":
+            answer_real = "G"
+        elif answer == "黃色":
+            answer_real = "Y" 
         else:
-            return "You shall not GET here!"
+            answer_real = ""
+
+        db = get_db()
+        c = db.execute("SELECT color FROM image WHERE image_name = ?", (r_img_name,))
+        right_answer = [r[0] for r in c][0]
     else:
-        return redirect(url_for('finished'))
+        return 'ooops'
+
+
+    if request.method == 'POST':
+        time = request.form['time']
+        print(type(time),flush=True)
+        time = round(float(time),2)
+        print(type(time),time,flush=True)
+        print(type(userid),userid,flush=True)
+        if answer_real == right_answer:
+            correct_times += 1
+            print("Correct! " + answer)
+            global total_right_time
+            total_right_time += time
+
+            db = get_db()
+            with db:
+                cursor = db.execute("update persons set test" + str(test_times) + " = ? where id = ?", (time,userid))
+     
+            sleep(random.choice([2,3,2.5]))
+            return redirect(url_for('start'))
+        else:
+            print("Oops. " + answer)
+            global total_wrong_time
+            total_wrong_time += time
+            db = get_db()
+            with db:
+                cursor = db.execute("update persons set test" + str(test_times) + " = ? where id = ?", (time,userid))
+
+            sleep(random.choice([2,3,2.5]))
+            return redirect(url_for('start'))
+    else:
+        return "You shall not GET here!"
+
         
 @app.route('/finished')
 def finished():
@@ -149,11 +172,11 @@ def finished():
     time = total_right_time + total_wrong_time
 
     with db:
-        db.execute('update persons set accuracy = ?  where name = ?',(accuracy,username))
-        db.execute('update persons set timespend = ? where name = ?', (time, username))
-        db.execute('update persons set wrong_time = ? where name = ?', (total_wrong_time, username))
-        db.execute('update persons set right_time = ? where name = ?', (total_right_time, username))
-        db.execute('update persons set timespend = ? where name = ?', (time, username))
+        db.execute('update persons set accuracy = ?  where id = ?',(accuracy,userid))
+        db.execute('update persons set timespend = ? where id = ?', (time, userid))
+        db.execute('update persons set wrong_time = ? where id = ?', (total_wrong_time, userid))
+        db.execute('update persons set right_time = ? where id = ?', (total_right_time, userid))
+        db.execute('update persons set timespend = ? where id = ?', (time, userid))
     return render_template('finished.html', name=username,accuracy=accuracy, time_spend=time)
 
 
